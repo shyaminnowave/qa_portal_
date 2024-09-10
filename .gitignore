@@ -1,0 +1,15 @@
+*.pyc
+*.wpr
+*.wpu
+*.env
+*.rdb
+.dockerignore
+celerybeat-schedule
+docker-compose.yml
+/local/
+.idea/
+sqlite3.db
+env
+__pycache__
+db.sqlite3
+staticfiles/

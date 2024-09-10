@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "dt-qa-portal"
+version = "0.1.0"
+description = ""
+authors = ["shyam"]
+readme = "README.md"
+packages = [{include = "dt_qa_portal"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Django = "4"
+django-restframework = "^0.0.1"
+drf-yasg = "^1.21.7"
+djangorestframework-simplejwt = "^5.3.1"
+django-extensions = "^3.2.3"
+pytest-django = "^4.8.0"
+psycopg2-binary = "^2.9.9"
+django-cors-headers = "^4.3.1"
+whitenoise = "^6.6.0"
+django-simple-history = "^3.5.0"
+drf-spectacular = "^0.27.1"
+openpyxl = "^3.1.2"
+django-dotenv = "^1.4.2"
+gunicorn = "^21.2.0"
+django-filter = "23.5"
+django-ckeditor = "^6.7.1"
+django-debug-toolbar = "^4.3.0"
+celery = "^5.4.0"
+django-import-export = "^4.1.1"
+django-autoslug = "^1.9.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
