@@ -6,4 +6,5 @@ class ResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StbResult
-        fields = ('result_url', 'result', 'failure_reason')
+        fields = ('start_time', 'end_time', 'result_url', 'result', 'failure_reason')
+
