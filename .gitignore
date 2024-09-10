@@ -7,6 +7,7 @@
 celerybeat-schedule
 docker-compose.yml
 /local/
+migrations/
 .idea/
 sqlite3.db
 env
