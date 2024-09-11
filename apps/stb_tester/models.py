@@ -42,7 +42,7 @@ class StbResult(TimeStampedModel):
     def get_result(self):
         return self.result[:20]
 
-    def get_datetime(self):
+    def get_start_date(self):
         _start_time = str(self.start_time).split(' ')
         _remove_gmt = _start_time[-1].split('+')
         if _remove_gmt and _start_time:
@@ -51,4 +51,17 @@ class StbResult(TimeStampedModel):
         _start_time.extend(_remove_gmt)
         return 'T'.join(_start_time)
 
+
+    def get_time(self, attr=None):
+        _time = None
+        if attr is None or attr == 'start_time':
+            _time = str(self.start_time).split(' ')
+        elif attr == 'end_time':
+            _time = str(self.end_time).split(' ')
+        _remove_gmt = _time[-1].split('+')
+        if _remove_gmt and _time:
+            _remove_gmt.pop()
+            _time.pop()
+        _time.extend(_remove_gmt)
+        return ' '.join(_time)
 

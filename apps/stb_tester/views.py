@@ -2,10 +2,10 @@ from rest_framework.views import APIView, Response
 from apps.stb_tester.models import StbResult
 from apps.stb_tester.utlity import StbAPI
 from apps.testcases.models import TestCaseModel, AutomationChoices
+from apps.stb_tester.serializers import ResultSerializer
 from django.db import transaction
-from rest_framework import status
+from rest_framework import status, generics
 from analytiqa.helpers.renders import ResponseInfo
-from django.shortcuts import get_object_or_404
 
 
 class STBResultGetView(APIView):
@@ -23,7 +23,7 @@ class STBResultGetView(APIView):
                 __query = TestCaseModel.objects.get(test_name=i.test_name)
                 __result_instance = StbResult.objects.filter(testcase=i).last()
                 if __result_instance:
-                    response = stb.get_result(testcase=i.test_name, date=__result_instance.get_datetime())
+                    response = stb.get_result(testcase=i.test_name, date=__result_instance.get_start_date())
                 else:
                     response = stb.get_result(i.test_name)
                 if response is False:
@@ -57,7 +57,14 @@ class STBResultGetView(APIView):
         return Response(self.response_format)
 
 
-class DemoResultView(APIView):
+class StbTestCaseResult(generics.ListAPIView):
 
-    def get(self, request, *args, **kwargs):
-        pass
+    serializer_class = ResultSerializer
+
+    def get_queryset(self):
+        testcase = self.kwargs['id']
+        queryset = StbResult.objects.filter(testcase__id=testcase).order_by('-start_time')[:50]
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        return super(StbTestCaseResult, self).list(request, *args, **kwargs)
