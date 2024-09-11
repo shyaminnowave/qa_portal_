@@ -23,7 +23,7 @@ class STBResultGetView(APIView):
                 __query = TestCaseModel.objects.get(test_name=i.test_name)
                 __result_instance = StbResult.objects.filter(testcase=i).last()
                 if __result_instance:
-                    response = stb.get_result(testcase=i.test_name, date=__result_instance.get_datetime())
+                    response = stb.get_result(testcase=i.test_name, date=__result_instance.get_start_date())
                 else:
                     response = stb.get_result(i.test_name)
                 if response is False:
