@@ -1,10 +1,11 @@
 import re
-import requests
 from rest_framework import serializers
+
 from apps.testcases.models import TestCaseModel, TestCaseStep, NatcoStatus, TestcaseExcelResult, TestReport, \
-                                TestCaseChoices
+    TestCaseChoices, Comment
 from apps.stbs.models import Natco, NactoManufactureLanguage, NatcoRelease
 from datetime import datetime
+from django.contrib.contenttypes.models import ContentType
 from apps.stb_tester.serializers import ResultSerializer
 from django.shortcuts import get_object_or_404
 # from apps.stb_tester.views import BaseAPI
@@ -148,7 +149,7 @@ class TestCaseSerializer(serializers.ModelSerializer):
     def validate_test_name(self, value):
         if value is None:
             raise serializers.ValidationError("Test Name Cannot be Empty")
-        if value and not re.match(r"^[a-zA-Z\s]+$", value):
+        if value and not re.match(r"^[a-zA-Z0-9_\s]+$", value):
             raise serializers.ValidationError("Test Name Cannot Contains Numbers")
         return value
 
@@ -334,3 +335,45 @@ class DistinctTestResultSerializer(serializers.Serializer):
 
     def get_min_ram(self, obj):
         return obj['min_ram']
+
+class HistorySerializer(serializers.Serializer):
+
+    history_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    history_type = serializers.CharField()
+    history_change_reason = serializers.CharField()
+    history_date = serializers.DateTimeField()
+    test_name = serializers.CharField()
+
+
+    def to_representation(self, instance):
+        represent = super().to_representation(instance)
+        represent['history_type'] = "Create" if instance.history_type == '+' else "Update" if instance.history_type == '~' else "Delete"
+        return represent
+
+
+class CommentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'comments', 'object_id', 'status', 'created_by', 'resolved_by')
+
+    def get_model_instance(self):
+        model_instance =  ContentType.objects.get_for_model(TestCaseModel)
+        return model_instance
+
+    def create(self, validated_data):
+        resolved_by = validated_data.pop('resolved_by', None)
+        comment = Comment.objects.create(content_type=self.get_model_instance(), **validated_data)
+        comment.save()
+        return comment
+
+    def update(self, instance, validated_data):
+        if instance:
+            instance.comments = validated_data.get('comments', instance.comments)
+            instance.status = validated_data.get('status', instance.status)
+            instance.resolved_by = validated_data.get('resolved_by', instance.resolved_by)
+            instance.save()
+        return instance
+
+
+
