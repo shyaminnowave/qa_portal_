@@ -12,7 +12,7 @@ from apps.testcases.models import (
     AutomationChoices,
     StatusChoices,
     PriorityChoice,
-    TestReport, Comment
+    TestReport, Comment, ScriptIssue
 )
 from apps.testcases.apis.serializers import (
     TestCaseSerializerList,
@@ -30,6 +30,7 @@ from apps.testcases.apis.serializers import (
     TestCaseFilterSerializer,
     TestStepSerializer,
     HistorySerializer,
+    ScriptIssueSerializer,
     CommentSerializer
 )
 from apps.stbs.models import NactoManufactureLanguage
@@ -686,12 +687,48 @@ class DemoHistoryView(generics.GenericAPIView):
         return Response(serializer.data)
 
 
+class ScriptIssueView(generics.ListCreateAPIView):
+
+    serializer_class = ScriptIssueSerializer
+
+    def get_queryset(self):
+        queryset = TestCaseModel.objects.prefetch_related('issues').get(id=self.kwargs.get("id"))
+        return queryset.issues.all()
+
+    def get(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.create(serializer.validated_data, id=self.kwargs.get('id', None))
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ScriptIssueDetailView(generics.GenericAPIView):
+
+    serializer_class = ScriptIssueSerializer
+
+    def get_queryset(self):
+        queryset = ScriptIssue.objects.get(id=self.kwargs.get("id"))
+        return queryset
+
+    def put(self, request, *args, **kwargs):
+        serializer = self.get_serializer(instance=self.get_queryset(), data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class CommentsView(generics.ListCreateAPIView):
 
     serializer_class = CommentSerializer
 
     def get_queryset(self):
-        queryset = Comment.objects.filter(object_id=self.kwargs['object_id'])
+        queryset = Comment.objects.filter(object_id=self.kwargs['id'])
         return queryset
 
     def get(self, request, *args, **kwargs):
@@ -712,6 +749,10 @@ class CommentEditView(generics.GenericAPIView):
     def get_queryset(self):
         queryset = Comment.objects.get(id=self.kwargs['pk'])
         return queryset
+
+    def get(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_queryset())
+        return Response(serializer.data)
 
     def put(self, request, *args, **kwargs):
         serializer = self.get_serializer(instance=self.get_queryset(), data=request.data)

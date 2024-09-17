@@ -26,8 +26,10 @@ urlpatterns = [
     path('test/', views.ReportView.as_view()),
     path('tes/', views.TestReportGraphView.as_view()),
     path('demo/', views.DemoView.as_view()),
-    path('testcase/comment/<int:object_id>/', views.CommentsView.as_view()),
-    path('comment/<int:pk>/', views.CommentEditView.as_view()),
+    path('testcase/issues/<int:id>/', views.ScriptIssueView.as_view()),
+    path('testcase/issue-detail/<int:id>/', views.ScriptIssueDetailView.as_view(), name='testcase-issue-detail'),
+    path('testcase/issues/comment/<int:id>/', views.CommentsView.as_view()),
+    path('testcase/issues/comment-detail/<int:pk>/', views.CommentEditView.as_view()),
     re_path(r"excel/(?P<path>.*)$", views.ExcelUploadView.as_view()),
     re_path(r"update-bulk/(?P<path>.*)$", views.BulkFieldUpdateView.as_view())
 

@@ -298,22 +298,37 @@ class TestcaseExcelResult(TimeStampedModel):
         return _filter
 
 
-
-class Comment(TimeStampedModel):
+class ScriptIssue(TimeStampedModel):
 
     class Status(models.TextChoices):
         RESOLVED = 'resolved', _('Resolved')
         INCOMPLETE = 'incomplete', _('Incomplete')
 
+    testcase = models.ForeignKey(TestCaseModel, on_delete=models.CASCADE, max_length=255, related_name='issues')
+    summary = models.TextField(default='')
+    description = models.TextField(default='')
+    result = models.CharField(max_length=255, default='')
+    status = models.CharField(choices=Status.choices, default=Status.INCOMPLETE, max_length=255)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
+                                   related_name='created_issues')
+    assinged_to = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
+                                        related_name='assinged_issues')
+    resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
+                                    related_name='resolved_issues')
+    comment = GenericRelation("Comment", related_name='issues')
+
+    def __str__(self):
+        return self.summary
+
+
+class Comment(TimeStampedModel):
+
     comments = models.TextField()
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
-    status = models.CharField(choices=Status.choices, default=Status.INCOMPLETE, max_length=255)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
                                    related_name='created_comments')
-    resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
-                                    related_name='resolved_comments')
 
     def __str__(self):
         return f"{self.comments[:20]}..."

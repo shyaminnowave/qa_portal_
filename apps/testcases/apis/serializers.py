@@ -1,8 +1,10 @@
 import re
 from rest_framework import serializers
+from simple_history.management.commands.populate_history import get_model
 
+from apps.account.models import Account
 from apps.testcases.models import TestCaseModel, TestCaseStep, NatcoStatus, TestcaseExcelResult, TestReport, \
-    TestCaseChoices, Comment
+    TestCaseChoices, Comment, ScriptIssue
 from apps.stbs.models import Natco, NactoManufactureLanguage, NatcoRelease
 from datetime import datetime
 from django.contrib.contenttypes.models import ContentType
@@ -351,21 +353,60 @@ class HistorySerializer(serializers.Serializer):
         return represent
 
 
+class ScriptIssueSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ScriptIssue
+        fields = ('id', 'summary', 'description', 'status', 'created_by', 'resolved_by', 'assinged_to')
+
+    def get_account_instance(self, name):
+        instance = Account.objects.get(email=name)
+        return instance
+
+    def create(self, validated_data, id=id):
+        if isinstance(id, int):
+            __instance = get_object_or_404(TestCaseModel, id=id)
+            if __instance:
+                script = ScriptIssue.objects.create(testcase=__instance,
+                                                    created_by=self.get_account_instance(validated_data.get('created_by')),
+                                                    assinged_to = self.get_account_instance(validated_data.get('assinged_to')),
+                                                    **validated_data)
+                script.save()
+                return ScriptIssueSerializer(script).data
+            raise TestCaseModel.DoesNotExist("Testcase Model Does Not Exist")
+        raise serializers.ValidationError(f"Expected Integer Id but received {type(id)}")
+
+    def update(self, instance, validated_data):
+        if instance:
+            instance.summary = validated_data.get('summary', instance.summary)
+            instance.resolved_by = self.get_account_instance(validated_data.get('resolved_by', instance.resolved_by))
+            instance.description = validated_data.get('description', instance.description)
+            instance.save()
+        return instance
+
+
 class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ('id', 'comments', 'object_id', 'status', 'created_by', 'resolved_by')
+        fields = ('id', 'comments', 'object_id', 'created_by')
 
     def get_model_instance(self):
-        model_instance =  ContentType.objects.get_for_model(TestCaseModel)
+        model_instance =  ContentType.objects.get_for_model(ScriptIssue)
         return model_instance
 
+    def get_object_instance(self, id=id):
+        instance = get_object_or_404(ScriptIssue, pk=id)
+        return instance
+
     def create(self, validated_data):
-        resolved_by = validated_data.pop('resolved_by', None)
-        comment = Comment.objects.create(content_type=self.get_model_instance(), **validated_data)
-        comment.save()
-        return comment
+        object_id = validated_data.pop('object_id', None)
+        obj_instance = self.get_object_instance(id=object_id)
+        if obj_instance:
+            comment = Comment.objects.create(content_type=self.get_model_instance(), object_id=obj_instance.id, **validated_data)
+            comment.save()
+            return comment
+        raise ScriptIssue.DoesNotExist("Object Does Not Exist")
 
     def update(self, instance, validated_data):
         if instance:
