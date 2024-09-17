@@ -357,7 +357,7 @@ class ScriptIssueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ScriptIssue
-        fields = ('id', 'summary', 'description', 'status', 'created_by', 'resolved_by', 'assinged_to')
+        fields = ('id', 'summary', 'description', 'status', 'created_by', 'resolved_by', 'assigned_to')
 
     def get_account_instance(self, name):
         instance = Account.objects.get(email=name)
@@ -367,12 +367,13 @@ class ScriptIssueSerializer(serializers.ModelSerializer):
         if isinstance(id, int):
             __instance = get_object_or_404(TestCaseModel, id=id)
             if __instance:
+                created_by = validated_data.pop('created_by', None)
+                assigned_to = validated_data.pop('assigned_to', None)
                 script = ScriptIssue.objects.create(testcase=__instance,
-                                                    created_by=self.get_account_instance(validated_data.get('created_by')),
-                                                    assinged_to = self.get_account_instance(validated_data.get('assinged_to')),
+                                                    created_by=self.get_account_instance(created_by),
+                                                    assigned_to=self.get_account_instance(assigned_to),
                                                     **validated_data)
-                script.save()
-                return ScriptIssueSerializer(script).data
+                return script
             raise TestCaseModel.DoesNotExist("Testcase Model Does Not Exist")
         raise serializers.ValidationError(f"Expected Integer Id but received {type(id)}")
 
@@ -380,6 +381,7 @@ class ScriptIssueSerializer(serializers.ModelSerializer):
         if instance:
             instance.summary = validated_data.get('summary', instance.summary)
             instance.resolved_by = self.get_account_instance(validated_data.get('resolved_by', instance.resolved_by))
+            instance.assigned_to = self.get_account_instance(validated_data.get('assigned_to', instance.assigned_to))
             instance.description = validated_data.get('description', instance.description)
             instance.save()
         return instance
@@ -404,7 +406,6 @@ class CommentSerializer(serializers.ModelSerializer):
         obj_instance = self.get_object_instance(id=object_id)
         if obj_instance:
             comment = Comment.objects.create(content_type=self.get_model_instance(), object_id=obj_instance.id, **validated_data)
-            comment.save()
             return comment
         raise ScriptIssue.DoesNotExist("Object Does Not Exist")
 

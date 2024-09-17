@@ -311,8 +311,8 @@ class ScriptIssue(TimeStampedModel):
     status = models.CharField(choices=Status.choices, default=Status.INCOMPLETE, max_length=255)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
                                    related_name='created_issues')
-    assinged_to = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
-                                        related_name='assinged_issues')
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
+                                        related_name='assigned_issues')
     resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
                                     related_name='resolved_issues')
     comment = GenericRelation("Comment", related_name='issues')

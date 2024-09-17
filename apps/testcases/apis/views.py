@@ -689,6 +689,10 @@ class DemoHistoryView(generics.GenericAPIView):
 
 class ScriptIssueView(generics.ListCreateAPIView):
 
+    def __init__(self, **kwargs) -> None:
+        self.response_format = ResponseInfo().response
+        super().__init__(**kwargs)
+
     serializer_class = ScriptIssueSerializer
 
     def get_queryset(self):
@@ -697,17 +701,40 @@ class ScriptIssueView(generics.ListCreateAPIView):
 
     def get(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset(), many=True)
-        return Response(serializer.data)
+        if serializer.data:
+            self.response_format["status"] = True
+            self.response_format["status_code"] = status.HTTP_200_OK
+            self.response_format["data"] = serializer.data
+            self.response_format["message"] = "Success"
+        else:
+            self.response_format["status"] = False
+            self.response_format["status_code"] = status.HTTP_400_BAD_REQUEST
+            self.response_format["message"] = "No Data"
+        return Response(self.response_format)
+
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.create(serializer.validated_data, id=self.kwargs.get('id', None))
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            self.response_format["status"] = True
+            self.response_format["status_code"] = status.HTTP_200_OK
+            self.response_format["data"] = serializer.data
+            self.response_format["message"] = "Success"
+            return Response(self.response_format)
+        self.response_format["status"] = False
+        self.response_format["status_code"] = status.HTTP_400_BAD_REQUEST
+        self.response_format["message"] = "No Data"
+        return Response(self.response_format)
+
 
 
 class ScriptIssueDetailView(generics.GenericAPIView):
+
+    def __init__(self, **kwargs) -> None:
+        self.response_format = ResponseInfo().response
+        super().__init__(**kwargs)
+
 
     serializer_class = ScriptIssueSerializer
 
@@ -715,15 +742,40 @@ class ScriptIssueDetailView(generics.GenericAPIView):
         queryset = ScriptIssue.objects.get(id=self.kwargs.get("id"))
         return queryset
 
+    def get(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_queryset())
+        if serializer.data:
+            self.response_format["status"] = True
+            self.response_format["status_code"] = status.HTTP_200_OK
+            self.response_format["data"] = serializer.data
+            self.response_format["message"] = "Success"
+        else:
+            self.response_format["status"] = False
+            self.response_format["status_code"] = status.HTTP_400_BAD_REQUEST
+            self.response_format["message"] = "No Data"
+        return Response(self.response_format)
+
     def put(self, request, *args, **kwargs):
         serializer = self.get_serializer(instance=self.get_queryset(), data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            self.response_format["status"] = True
+            self.response_format["status_code"] = status.HTTP_200_OK
+            self.response_format["data"] = serializer.data
+            self.response_format["message"] = "Success"
+            return Response(self.response_format)
+        self.response_format["status"] = False
+        self.response_format["status_code"] = status.HTTP_400_BAD_REQUEST
+        self.response_format["message"] = "No Data"
+        return Response(self.response_format)
+
 
 
 class CommentsView(generics.ListCreateAPIView):
+
+    def __init__(self, **kwargs) -> None:
+        self.response_format = ResponseInfo().response
+        super().__init__(**kwargs)
 
     serializer_class = CommentSerializer
 
@@ -733,17 +785,39 @@ class CommentsView(generics.ListCreateAPIView):
 
     def get(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset(), many=True)
-        return Response(serializer.data)
+        if serializer:
+            self.response_format["status"] = True
+            self.response_format["status_code"] = status.HTTP_200_OK
+            self.response_format["data"] = serializer.data
+            self.response_format["message"] = "Success"
+        else:
+            self.response_format["status"] = False
+            self.response_format["status_code"] = status.HTTP_400_BAD_REQUEST
+            self.response_format["message"] = "No Data"
+        return Response(self.response_format)
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            serializer.create(serializer.validated_data)
+            self.response_format["status"] = True
+            self.response_format["status_code"] = status.HTTP_200_OK
+            self.response_format["data"] = serializer.data
+            self.response_format["message"] = "Success"
+            return Response(self.response_format)
+        self.response_format["status"] = False
+        self.response_format["status_code"] = status.HTTP_400_BAD_REQUEST
+        self.response_format["message"] = "No Data"
+        return Response(self.response_format)
+
 
 
 class CommentEditView(generics.GenericAPIView):
+
+    def __init__(self, **kwargs) -> None:
+        self.response_format = ResponseInfo().response
+        super().__init__(**kwargs)
+
     serializer_class = CommentSerializer
 
     def get_queryset(self):
@@ -752,11 +826,27 @@ class CommentEditView(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset())
-        return Response(serializer.data)
+        if serializer:
+            self.response_format["status"] = True
+            self.response_format["status_code"] = status.HTTP_200_OK
+            self.response_format["data"] = serializer.data
+            self.response_format["message"] = "Success"
+        else:
+            self.response_format["status"] = False
+            self.response_format["status_code"] = status.HTTP_400_BAD_REQUEST
+            self.response_format["message"] = "No Data"
+        return Response(self.response_format)
 
     def put(self, request, *args, **kwargs):
         serializer = self.get_serializer(instance=self.get_queryset(), data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            self.response_format["status"] = True
+            self.response_format["status_code"] = status.HTTP_200_OK
+            self.response_format["data"] = serializer.data
+            self.response_format["message"] = "Success"
+            return Response(self.response_format)
+        self.response_format["status"] = False
+        self.response_format["status_code"] = status.HTTP_400_BAD_REQUEST
+        self.response_format["message"] = "No Data"
+        return Response(self.response_format)
