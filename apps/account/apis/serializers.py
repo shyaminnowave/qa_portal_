@@ -156,8 +156,9 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         _data = super(ProfileSerializer, self).to_representation(instance)
-        _data['groups'] = instance.groups.name
-        _data['permissions'] = [i.name for i in instance.groups.permissions.all()]
+        _data['groups'] = instance.groups.name if instance.groups else None
+        _data['permissions'] = [i.name for i in instance.groups.permissions.all()] if instance.groups else None
+
         return _data
 
 
