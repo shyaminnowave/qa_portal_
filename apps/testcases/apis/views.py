@@ -1,7 +1,4 @@
-import enum
-from rest_framework.views import Response
 from rest_framework import generics
-from unicodedata import decimal
 from collections import defaultdict
 from apps.testcases.models import (
     TestCaseModel,
@@ -20,36 +17,25 @@ from apps.testcases.apis.serializers import (
     ExcelSerializer,
     NatcoStatusSerializer,
     DistinctTestResultSerializer,
-    TestResultSerializer,
     NavbarFilterSerializer,
     TestResultDRPSerializer,
     BulkFieldUpdateSerializer,
     NatcoGraphAPISerializer,
-    ReportSerializer,
     GraphReportSerializer,
-    TestCaseFilterSerializer,
     TestStepSerializer,
     HistorySerializer,
     ScriptIssueSerializer,
     CommentSerializer
 )
-from apps.stbs.models import NactoManufactureLanguage
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from apps.testcases.pagination import CustomPagination
-from openpyxl import load_workbook
-from django.db import transaction
-from django.forms.models import model_to_dict
-from django.http import JsonResponse
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiSchemaBase
 from drf_spectacular.openapi import OpenApiTypes, OpenApiExample
-from rest_framework.exceptions import APIException
 from django_filters import rest_framework as filters
 from apps.testcases.filters import NatcoStatusFilter
-from rest_framework import status
 from apps.stbs.permissions import AdminPermission
 from analytiqa.helpers.renders import ResponseInfo
-from rest_framework.renderers import TemplateHTMLRenderer
 from analytiqa.helpers import custom_generics as cgenerics
 from django.db.models import OuterRef, Subquery
 from django.views.generic import TemplateView
@@ -59,7 +45,6 @@ from django.db.models import Min, F, Count, Subquery, OuterRef, Avg, Q
 from apps.stbs.models import Natco
 from apps.testcases.utlity import ReportExcel
 # from apps.stb_tester.views import BaseAPI
-import json
 
 
 class ResponseTemplateApi:
@@ -715,18 +700,23 @@ class ScriptIssueView(generics.ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.create(serializer.validated_data, id=self.kwargs.get('id', None))
-            self.response_format["status"] = True
-            self.response_format["status_code"] = status.HTTP_200_OK
-            self.response_format["data"] = serializer.data
-            self.response_format["message"] = "Success"
+        try:
+            if serializer.is_valid(raise_exception=True):
+                serializer.create(serializer.validated_data, id=self.kwargs.get('id', None))
+                self.response_format["status"] = True
+                self.response_format["status_code"] = status.HTTP_200_OK
+                self.response_format["data"] = serializer.data
+                self.response_format["message"] = "Success"
+                return Response(self.response_format)
+            self.response_format["status"] = False
+            self.response_format["status_code"] = status.HTTP_400_BAD_REQUEST
+            self.response_format["message"] = serializer.errors
             return Response(self.response_format)
-        self.response_format["status"] = False
-        self.response_format["status_code"] = status.HTTP_400_BAD_REQUEST
-        self.response_format["message"] = "No Data"
-        return Response(self.response_format)
-
+        except Exception as e:
+            self.response_format["status"] = False
+            self.response_format["status_code"] = status.HTTP_400_BAD_REQUEST
+            self.response_format["message"] = str(e)
+            return Response(self.response_format)
 
 
 class ScriptIssueDetailView(generics.GenericAPIView):

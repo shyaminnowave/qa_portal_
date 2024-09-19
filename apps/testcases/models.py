@@ -310,11 +310,9 @@ class ScriptIssue(TimeStampedModel):
     result = models.CharField(max_length=255, default='')
     status = models.CharField(choices=Status.choices, default=Status.INCOMPLETE, max_length=255)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
-                                   related_name='created_issues')
-    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
-                                        related_name='assigned_issues')
+                                   related_name='created_issues', to_field='email')
     resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True,
-                                    related_name='resolved_issues')
+                                    related_name='resolved_issues', to_field='email')
     comment = GenericRelation("Comment", related_name='issues')
 
     def __str__(self):

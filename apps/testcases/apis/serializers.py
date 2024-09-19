@@ -1,6 +1,7 @@
 import re
 from rest_framework import serializers
 from simple_history.management.commands.populate_history import get_model
+from urllib3 import request
 
 from apps.account.models import Account
 from apps.testcases.models import TestCaseModel, TestCaseStep, NatcoStatus, TestcaseExcelResult, TestReport, \
@@ -355,23 +356,28 @@ class HistorySerializer(serializers.Serializer):
 
 class ScriptIssueSerializer(serializers.ModelSerializer):
 
+    id = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = ScriptIssue
-        fields = ('id', 'summary', 'description', 'status', 'created_by', 'resolved_by', 'assigned_to')
+        fields = ['id', 'summary', 'description', 'status', 'created_by', 'resolved_by']
 
-    def get_account_instance(self, name):
-        instance = Account.objects.get(email=name)
-        return instance
+    def get_account_instance(self, email):
+        if email is not None:
+            try:
+                instance = Account.objects.get(email=email)
+                return instance
+            except Account.DoesNotExist:
+                return None
+        return None
 
     def create(self, validated_data, id=id):
+        print(validated_data.get('created_by'))
         if isinstance(id, int):
             __instance = get_object_or_404(TestCaseModel, id=id)
             if __instance:
-                created_by = validated_data.pop('created_by', None)
-                assigned_to = validated_data.pop('assigned_to', None)
+                resolved = validated_data.pop('resolved_by', None)
                 script = ScriptIssue.objects.create(testcase=__instance,
-                                                    created_by=self.get_account_instance(created_by),
-                                                    assigned_to=self.get_account_instance(assigned_to),
                                                     **validated_data)
                 return script
             raise TestCaseModel.DoesNotExist("Testcase Model Does Not Exist")
@@ -381,10 +387,14 @@ class ScriptIssueSerializer(serializers.ModelSerializer):
         if instance:
             instance.summary = validated_data.get('summary', instance.summary)
             instance.resolved_by = self.get_account_instance(validated_data.get('resolved_by', instance.resolved_by))
-            instance.assigned_to = self.get_account_instance(validated_data.get('assigned_to', instance.assigned_to))
             instance.description = validated_data.get('description', instance.description)
             instance.save()
         return instance
+
+    # def to_representation(self, instance):
+    #     represent = super().to_representation(instance)
+    #     represent['created_by'] = instance.created_by.email
+    #     return represent
 
 
 class CommentSerializer(serializers.ModelSerializer):
