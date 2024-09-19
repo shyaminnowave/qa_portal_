@@ -1,0 +1,87 @@
+version: '3.8'
+services:
+
+  redis:
+    image: redis:7.2.5-alpine
+
+  db:
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=shyam6132
+      - POSTGRES_DB=analytiqa
+      - POSTGRES_HOST=5432
+
+  qa_backend:
+    build:
+      context: .
+      dockerfile: ./local/django/Dockerfile
+    image: 'qa_backend'
+    restart: always
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    container_name: "qa_backend"
+    command: /start
+    depends_on:
+      - redis
+      - db
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: ./local/django/Dockerfile
+    image: 'qa_portal_worker'
+    command: /start-celeryworker
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: ./local/django/Dockerfile
+    image: 'qa_portal_beat'
+    command: /start-celerybeat
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+
+  flower:
+    build:
+      context: .
+      dockerfile: ./local/django/Dockerfile
+    image: 'qa_portal_flower'
+    command: /start-flower
+    volumes:
+      - .:/app
+    ports:
+      - "5557:5555"
+    depends_on:
+      - redis
+      - db
+      - celery_worker
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: shyam@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: shyam
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+
+volumes:
+  postgres_data:
+  pgadmin-data:
